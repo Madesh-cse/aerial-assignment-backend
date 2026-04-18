@@ -131,32 +131,40 @@ GET /api/investigate
   ]
 }
 ```
-🧠 AI Logic Flow
-- **Badge Logs + Vehicle Data + Drone Logs**
-              ↓
-       - **Correlation Engine**
-              ↓
-      -**Risk Detection Logic**
-              ↓
-   `**AI Summary + Confidence Score**
-   
-📊 Confidence Calculation
+## 🧠 AI Logic Flow
 
-Badge match → +30
-Vehicle suspicious → +30
-Drone confirmation → +40
+- **Badge Logs + Vehicle Data + Drone Logs**  
+- **↓**  
+- **Correlation Engine**  
+- **↓**  
+- **Risk Detection Logic**  
+- **↓**  
+- **AI Summary + Confidence Score**  
 
-⚠️ Notes
-Simulation-based AI system (no real ML model)
-Designed for frontend integration
+---
 
-Easily extendable with real-time data
-🚀 Future Improvements
-🤖 Integrate real ML models
-📡 Real-time updates (WebSockets)
-🗄 Database integration (MongoDB / PostgreSQL)
-🔐 Authentication & authorization
+## 📊 Confidence Calculation
 
+- **Badge match → +30**  
+- **Vehicle suspicious → +30**  
+- **Drone confirmation → +40**  
+
+---
+
+## ⚠️ Notes
+
+- **Simulation-based AI system (no real ML model)**  
+- **Designed for frontend integration**  
+- **Easily extendable with real-time data**  
+
+---
+
+## 🚀 Future Improvements
+
+- **🤖 Integrate real ML models**  
+- **📡 Real-time updates (WebSockets)**  
+- **🗄 Database integration (MongoDB / PostgreSQL)**  
+- **🔐 Authentication & authorization**  
 
 👨‍💻 Author
 Madesh Mohan
