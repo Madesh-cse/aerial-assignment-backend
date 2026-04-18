@@ -1,14 +1,13 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { investigateNight } from "../agents/NightInvestigation";
 import { incidents } from "../data/incidents";
 import { askIncidentAI } from "../AI/askIncidentAI";
 
 const router = express.Router();
 
-router.get("/investigate", (req, res) => {
+router.get("/investigate", (req:Request, res:Response) => {
   try {
-    const aiResult = investigateNight(incidents); // ✅ pass incidents
-
+    const aiResult = investigateNight(incidents);
     res.json({
       incidents,
       ...aiResult,
