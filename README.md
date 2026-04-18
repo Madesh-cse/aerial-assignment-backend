@@ -132,13 +132,13 @@ GET /api/investigate
 }
 ```
 🧠 AI Logic Flow
-Badge Logs + Vehicle Data + Drone Logs
+- **Badge Logs + Vehicle Data + Drone Logs**
               ↓
-        Correlation Engine
+       - **Correlation Engine**
               ↓
-      Risk Detection Logic
+      -**Risk Detection Logic**
               ↓
-   AI Summary + Confidence Score
+   `**AI Summary + Confidence Score**
    
 📊 Confidence Calculation
 
