@@ -2,9 +2,7 @@ import { getBadgeLogs } from "../tools/badgeTools";
 import { getVehiclePath } from "../tools/vechicleTools";
 import { getDronePatrolLogs } from "../tools/droneTools";
 
-/**
- * Convert "02:15 AM" → minutes for sorting
- */
+// ⏱ convert time → minutes for comparison
 const parseTime = (t: string) => {
   const [time, meridian] = t.split(" ");
   let [h, m] = time.split(":").map(Number);
@@ -15,49 +13,6 @@ const parseTime = (t: string) => {
   return h * 60 + m;
 };
 
-/**
- * Build human-readable AI narrative
- */
-const buildParagraphSummary = (items: any[], location: string) => {
-  const sorted = [...items].sort(
-    (a, b) => parseTime(a.time) - parseTime(b.time)
-  );
-
-  const startTime = sorted[0].time;
-  const endTime = sorted[sorted.length - 1].time;
-
-  const flow = sorted
-    .map((i) => `${i.type.toLowerCase()} at ${i.time}`)
-    .join(", followed by ");
-
-  const isPattern = sorted.length >= 3;
-
-  return `Between ${startTime} and ${endTime}, multiple activities were detected at ${location}. The sequence began with ${flow}. ${
-    isPattern
-      ? "The close timing and repeated activity suggest a coordinated pattern requiring further investigation."
-      : "These events appear to be isolated but still require monitoring."
-  }`;
-};
-
-/**
- * Group incidents by location
- */
-const groupByLocation = (incidents: any[]) => {
-  const grouped: Record<string, any[]> = {};
-
-  for (const inc of incidents) {
-    if (!grouped[inc.location]) {
-      grouped[inc.location] = [];
-    }
-    grouped[inc.location].push(inc);
-  }
-
-  return grouped;
-};
-
-/**
- * MAIN AI INVESTIGATION ENGINE
- */
 export const investigateNight = (incidents: any[]) => {
   const badge = getBadgeLogs(incidents);
   const vehicle = getVehiclePath(incidents);
@@ -69,35 +24,72 @@ export const investigateNight = (incidents: any[]) => {
   const reasoningSteps: string[] = [];
   const signals: string[] = [];
 
-  // -----------------------------
-  // 🧠 SIGNAL ENGINE
-  // -----------------------------
+  // 🕒 TIME WINDOW ANALYSIS (IMPORTANT UPGRADE)
+  const sorted = [...incidents].sort(
+    (a, b) => parseTime(a.time) - parseTime(b.time)
+  );
 
+  const startTime = sorted[0]?.time;
+  const endTime = sorted[sorted.length - 1]?.time;
+
+  const timeWindow = `${startTime} - ${endTime}`;
+
+  // 📍 LOCATION CLUSTER SCORE
+  const sameLocationCount = incidents.filter(
+    (i) => i.location === location
+  ).length;
+
+  if (sameLocationCount >= 2) {
+    confidence += 20;
+    signals.push("LOCATION_CLUSTER");
+    reasoningSteps.push(
+      `${sameLocationCount} incidents detected at ${location} within short duration`
+    );
+  }
+
+  // 🚨 BADGE + DRONE CORRELATION
   if (badge.location === drone.location) {
     confidence += 30;
-    signals.push("BADGE_MATCH");
-    reasoningSteps.push(`Badge activity detected at ${badge.location}`);
-  }
-
-  if (vehicle.suspicious) {
-    confidence += 30;
-    signals.push("VEHICLE_SUSPICIOUS");
+    signals.push("BADGE_DRONE_MATCH");
     reasoningSteps.push(
-      `Suspicious vehicle movement near ${vehicle.location}`
+      `Badge scan aligns with drone detection at ${location}`
     );
   }
 
+  // 🚗 VEHICLE ANOMALY SCORING (IMPROVED LOGIC)
+  if (vehicle.suspicious) {
+    confidence += 25;
+    signals.push("VEHICLE_ANOMALY");
+    reasoningSteps.push(
+      `Irregular vehicle movement observed near ${vehicle.location}`
+    );
+  }
+
+  // 🚁 DRONE CONFIRMATION
   if (drone.movementConfirmed) {
-    confidence += 40;
+    confidence += 25;
     signals.push("DRONE_CONFIRMATION");
     reasoningSteps.push(
-      `Repeated drone activity confirmed at ${drone.location}`
+      `Drone repeatedly confirmed movement at ${drone.location}`
     );
   }
 
-  // -----------------------------
-  // 🚨 ALERT TYPE
-  // -----------------------------
+  // 🔥 SEQUENCE DETECTION (NEW FEATURE)
+  const sequence = incidents.map((i) => i.type).join(" → ");
+
+  if (
+    sequence.includes("Vehicle Movement") &&
+    sequence.includes("Badge Scan") &&
+    sequence.includes("Unauthorized Access")
+  ) {
+    confidence += 20;
+    signals.push("COORDINATED_SEQUENCE");
+    reasoningSteps.push(
+      `Suspicious sequence detected: ${sequence}`
+    );
+  }
+
+  // 🎯 FINAL ALERT TYPE
   let alertType: "NORMAL" | "WARNING" | "CRITICAL" = "NORMAL";
 
   if (confidence >= 80) alertType = "CRITICAL";
@@ -105,40 +97,14 @@ export const investigateNight = (incidents: any[]) => {
 
   const needsEscalation = confidence >= 70;
 
-  // -----------------------------
-  // ⏱ PARSE INCIDENT TIMELINE
-  // -----------------------------
-  const grouped = groupByLocation(incidents);
-
-  const timelineBlocks: string[] = [];
-
-  Object.entries(grouped).forEach(([loc, items]) => {
-    const summaryText = buildParagraphSummary(items, loc);
-    timelineBlocks.push(summaryText);
-  });
-
-  const timelineSummary = timelineBlocks.join("\n\n");
-
-  // -----------------------------
-  // 🧠 FINAL AI SUMMARY (NARRATIVE STYLE)
-  // -----------------------------
+  // 🧠 HUMAN-STYLE SUMMARY (IMPROVED)
   const summary =
     alertType === "CRITICAL"
-      ? `🚨 CRITICAL ALERT DETECTED\n\n${timelineSummary}\n\nThis pattern indicates a high-risk coordinated activity requiring immediate intervention.`
+      ? `[${timeWindow}] CRITICAL ALERT: Multiple correlated incidents detected at ${location}. Pattern suggests coordinated activity involving vehicle movement, badge scan, and unauthorized access.`
       : alertType === "WARNING"
-      ? `⚠ SUSPICIOUS ACTIVITY DETECTED\n\n${timelineSummary}\n\nContinued monitoring is recommended due to unusual activity patterns.`
-      : `✅ NORMAL ACTIVITY\n\n${timelineSummary}\n\nNo significant threat detected during the observation window.`;
+      ? `[${timeWindow}] WARNING: Suspicious activity cluster detected at ${location}.`
+      : `[${timeWindow}] NORMAL: No strong anomaly detected at ${location}.`;
 
-  // -----------------------------
-  // 📌 FOLLOW UP ACTION
-  // -----------------------------
-  const followUp = needsEscalation
-    ? `Immediate inspection required at ${location}`
-    : "Continue passive monitoring";
-
-  // -----------------------------
-  // 📤 RESPONSE PAYLOAD
-  // -----------------------------
   return {
     summary,
     confidence,
@@ -146,7 +112,9 @@ export const investigateNight = (incidents: any[]) => {
     location,
     signals,
     reasoningSteps,
-    followUp,
+    followUp: needsEscalation
+      ? `Immediate inspection required at ${location}. Multiple signals indicate possible coordinated intrusion.`
+      : "Continue monitoring. No escalation required at this time.",
     timestamp: new Date().toISOString(),
   };
 };
